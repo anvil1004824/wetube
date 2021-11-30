@@ -116,6 +116,10 @@ const handleMouseLeave = () => {
 
 const handleEnded = () => {
   playBtnIcon.classList = "fas fa-play";
+  const { id } = videoContainer.dataset;
+  fetch(`/api/videos/${id}/view`, {
+    method: "POST",
+  });
 };
 
 const handleSpacebar = (event) => {
