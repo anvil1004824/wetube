@@ -1,6 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import session from "express-session";
+import flash from "express-flash";
 import favicon from "serve-favicon";
 import path from "path";
 import MongoStore from "connect-mongo";
@@ -29,6 +30,7 @@ app.use(
   })
 );
 
+app.use(flash());
 app.use(localsMiddleware);
 app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
 app.use((req, res, next) => {
