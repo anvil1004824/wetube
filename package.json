@@ -29,6 +29,7 @@
     "node-fetch": "^2.6.6",
     "path": "^0.12.7",
     "pug": "^3.0.2",
+    "regenerator-runtime": "^0.13.9",
     "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
