@@ -124,6 +124,7 @@ const handleEnded = () => {
 
 const handleSpacebar = (event) => {
   if (event.key === " ") {
+    event.preventDefault();
     handlePlayClick();
   }
 };
