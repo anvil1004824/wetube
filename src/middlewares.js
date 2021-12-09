@@ -9,9 +9,17 @@ const s3 = new aws.S3({
   },
 });
 
-const multerUploader = multerS3({
+const isHeroku = process.env.NODE_ENV === "production";
+
+const s3ImageUploader = multerS3({
   s3: s3,
-  bucket: "wetube-anvil",
+  bucket: "wetube-anvil/images",
+  acl: "public-read",
+});
+
+const s3VideoUploader = multerS3({
+  s3: s3,
+  bucket: "wetube-anvil/videos",
   acl: "public-read",
 });
 
@@ -45,7 +53,7 @@ export const avatarUpload = multer({
   limits: {
     fileSize: 3000000,
   },
-  storage: multerUploader,
+  storage: isHeroku ? s3ImageUploader : undefined,
 });
 
 export const videoUpload = multer({
@@ -53,5 +61,25 @@ export const videoUpload = multer({
   limits: {
     fileSize: 10000000,
   },
-  storage: multerUploader,
+  storage: isHeroku ? s3VideoUploader : undefined,
 });
+
+export const s3DeleteAvatarMiddleware = (req, res, next) => {
+  if (!req.file || !isHeroku) {
+    return next();
+  }
+  s3.deleteObject(
+    {
+      Bucket: "wetube-anvil",
+      Key: `images/${req.session.user.avatarUrl.split("/")[4]}`,
+    },
+    (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("DELETE SUCCESS");
+      }
+    }
+  );
+  next();
+};

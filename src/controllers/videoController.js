@@ -1,6 +1,14 @@
 import User from "../models/User";
 import Video from "../models/Video";
 import Comment from "../models/Comment";
+import aws from "aws-sdk";
+
+const s3 = new aws.S3({
+  credentials: {
+    accessKeyId: process.env.AWS_ID,
+    secretAccessKey: process.env.AWS_SECRET,
+  },
+});
 
 export const home = async (req, res) => {
   const videos = await Video.find({})
@@ -66,12 +74,13 @@ export const postUpload = async (req, res) => {
   } = req.session;
   const { video, thumb } = req.files;
   const { title, description, hashtags } = req.body;
+  const isHeroku = process.env.NODE_ENV === "production";
   try {
     const newVideo = await Video.create({
       title,
       description,
-      fileUrl: video[0].location,
-      thumbUrl: thumb[0].location,
+      fileUrl: isHeroku ? video[0].location : "/" + video[0].path,
+      thumbUrl: isHeroku ? thumb[0].location : "/" + thumb[0].path,
       owner: _id,
       hashtags: Video.formatHashtags(hashtags),
     });
@@ -94,14 +103,38 @@ export const deleteVideo = async (req, res) => {
   } = req.session;
   const video = await Video.findById(id);
   const user = await User.findById(video.owner);
-  if (!video) {
+  if (!video || !user) {
     return res.status(404).render("404", { pageTitle: "Video not found." });
-  }
-  if (!user) {
   }
   if (String(video.owner) !== _id) {
     return res.status(403).redirect("/");
   }
+  s3.deleteObject(
+    {
+      Bucket: "wetube-anvil",
+      Key: `videos/${video.fileUrl.split("/")[4]}`,
+    },
+    (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("DELETE SUCCESS");
+      }
+    }
+  );
+  s3.deleteObject(
+    {
+      Bucket: "wetube-anvil",
+      Key: `videos/${video.thumbUrl.split("/")[4]}`,
+    },
+    (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("DELETE SUCCESS");
+      }
+    }
+  );
   user.videos = user.videos.filter((video) => String(video) !== id);
   await video.comments.forEach(async (item) => {
     await Comment.findByIdAndDelete(item);
