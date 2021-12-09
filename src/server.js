@@ -32,12 +32,11 @@ app.use(
 app.use(flash());
 app.use(localsMiddleware);
 app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
-// Delete Because of AWS config
-// app.use((req, res, next) => {
-//   res.header("Cross-Origin-Embedder-Policy", "require-corp");
-//   res.header("Cross-Origin-Opener-Policy", "same-origin");
-//   next();
-// });
+app.use((req, res, next) => {
+  res.header("Cross-Origin-Embedder-Policy", "require-corp");
+  res.header("Cross-Origin-Opener-Policy", "same-origin");
+  next();
+});
 app.use("/uploads", express.static("uploads"));
 app.use("/static", express.static("assets"));
 app.use("/", rootRouter);
